@@ -2,11 +2,20 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Manajemen Inventaris Barang') }}
+                {{ __('Daftar Inventaris Barang') }}
             </h2>
-            <a href="{{ route('products.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
-                + Tambah Barang
-            </a>
+            
+            <!-- Tombol Tambah & PDF Hanya Muncul Jika Login Sebagai Admin -->
+            @if(Auth::user()->role === 'admin')
+                <div class="space-x-2">
+                    <a href="{{ route('products.exportPdf') }}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm shadow">
+                        📄 Export PDF
+                    </a>
+                    <a href="{{ route('products.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm shadow">
+                        + Tambah Barang
+                    </a>
+                </div>
+            @endif
         </div>
     </x-slot>
 
@@ -26,28 +35,36 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harga</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stok</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                            @if(Auth::user()->role === 'admin')
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($products as $item)
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $item->name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $item->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $item->category }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">Rp {{ number_format($item->price) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $item->stock }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap flex space-x-2">
-                                    <a href="{{ route('products.edit', $item->id) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                                    <form action="{{ route('products.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Yakin hapus data?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
-                                    </form>
-                                </td>
+                                
+                                <!-- Kolom Aksi Edit & Hapus Hanya Muncul Jika Login Sebagai Admin -->
+                                @if(Auth::user()->role === 'admin')
+                                    <td class="px-6 py-4 whitespace-nowrap flex space-x-3">
+                                        <a href="{{ route('products.edit', $item->id) }}" class="text-indigo-600 hover:text-indigo-900 font-bold">Edit</a>
+                                        <form action="{{ route('products.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Yakin hapus data ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
+                                        </form>
+                                    </td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">Belum ada data barang.</td>
+                                <td colspan="{{ Auth::user()->role === 'admin' ? 5 : 4 }}" class="px-6 py-4 text-center text-gray-500">
+                                    Belum ada data barang.
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>

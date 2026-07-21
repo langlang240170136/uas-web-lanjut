@@ -8,73 +8,91 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProductController extends Controller
 {
+    // === FITUR CRUD WEB ===
+
+    // Tampil semua barang
     public function index()
     {
         $products = Product::all();
         return view('products.index', compact('products'));
     }
 
+    // Form tambah barang
     public function create()
     {
         return view('products.create');
     }
 
+    // Simpan barang baru
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'category' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|numeric',
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'category' => 'required|string|max:255',
+            'price'    => 'required|numeric',
+            'stock'    => 'required|integer',
         ]);
 
-        Product::create($request->all());
+        Product::create($validated);
 
         return redirect()->route('products.index')->with('success', 'Barang berhasil ditambahkan!');
     }
 
+    // Form edit barang
     public function edit(Product $product)
     {
         return view('products.edit', compact('product'));
     }
 
+    // Update data barang
     public function update(Request $request, Product $product)
     {
-        $request->validate([
-            'name' => 'required',
-            'category' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|numeric',
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'category' => 'required|string|max:255',
+            'price'    => 'required|numeric',
+            'stock'    => 'required|integer',
         ]);
 
-        $product->update($request->all());
+        $product->update($validated);
 
         return redirect()->route('products.index')->with('success', 'Barang berhasil diperbarui!');
     }
 
+    // Hapus barang
     public function destroy(Product $product)
     {
         $product->delete();
         return redirect()->route('products.index')->with('success', 'Barang berhasil dihapus!');
     }
 
-    // Fitur Export PDF untuk Laporan
+    // === FITUR EXPORT PDF ===
     public function exportPdf()
     {
         $products = Product::all();
         $pdf = Pdf::loadView('reports.pdf', compact('products'));
-        return $pdf->download('laporan-inventaris.pdf');
+        return $pdf->download('laporan-inventaris-barang.pdf');
     }
 
-    // REST API Endpoints (Untuk Pengujian Postman)
+    // === FITUR REST API ===
     public function apiIndex()
     {
-        return response()->json(['status' => 'success', 'data' => Product::all()]);
+        return response()->json(Product::all(), 200);
     }
 
     public function apiStore(Request $request)
     {
-        $product = Product::create($request->all());
-        return response()->json(['status' => 'success', 'data' => $product], 201);
+        $validated = $request->validate([
+            'name'     => 'required|string',
+            'category' => 'required|string',
+            'price'    => 'required|numeric',
+            'stock'    => 'required|integer',
+        ]);
+
+        $product = Product::create($validated);
+        return response()->json([
+            'message' => 'Product Created Successfully',
+            'data'    => $product
+        ], 201);
     }
 }
